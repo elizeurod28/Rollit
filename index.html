@@ -1214,3 +1214,439 @@
     </script>
 </body>
 </html>
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Rollit</title>
+    <link rel="icon" href="https://upload.wikimedia.org/wikipedia/commons/e/e7/Instagram_logo_2016.svg" type="image/x-icon">
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <style>
+        :root {
+            --primary-bg-color: #121212;
+            --secondary-bg-color: #1e1e1e;
+            --card-bg-color: #2a2a2a;
+            --text-color: #ffffff;
+            --light-gray: #b0b0b0;
+            --accent-color: #e91e63;
+            --border-radius: 8px;
+            --spacing-sm: 10px;
+            --spacing-md: 20px;
+            --spacing-lg: 30px;
+        }
+
+        body {
+            font-family: 'Poppins', sans-serif;
+            background-color: var(--primary-bg-color);
+            color: var(--text-color);
+            margin: 0;
+            padding: 0;
+            display: flex;
+            flex-direction: column;
+            min-height: 100vh;
+            overflow-x: hidden;
+            touch-action: pan-y;
+        }
+
+        .main-header {
+            background-color: var(--secondary-bg-color);
+            padding: var(--spacing-md) var(--spacing-lg);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 1px solid #333;
+            position: sticky;
+            top: 0;
+            z-index: 500;
+        }
+
+        .logo {
+            font-size: 1.8em;
+            font-weight: 700;
+            color: var(--accent-color);
+            text-decoration: none;
+        }
+
+        .main-nav ul {
+            list-style: none;
+            margin: 0;
+            padding: 0;
+            display: flex;
+            gap: var(--spacing-md);
+        }
+
+        .main-nav a {
+            color: var(--light-gray);
+            text-decoration: none;
+            font-weight: 600;
+            padding: var(--spacing-sm) var(--spacing-md);
+            border-radius: var(--border-radius);
+            transition: background-color 0.3s ease, color 0.3s ease;
+        }
+
+        .main-nav a:hover {
+            background-color: var(--card-bg-color);
+            color: var(--text-color);
+        }
+
+        .active-tab {
+            color: var(--accent-color) !important;
+            border-bottom: 2px solid var(--accent-color);
+        }
+
+        /* Estilo para o feed vertical (For You) */
+        .vertical-feed {
+            display: none;
+            flex-direction: column;
+            width: 100%;
+            height: calc(100vh - 60px);
+            overflow-y: scroll;
+            scroll-snap-type: y mandatory;
+            scroll-behavior: smooth;
+            -webkit-overflow-scrolling: touch;
+        }
+
+        .vertical-video-container {
+            width: 100%;
+            height: 100vh;
+            scroll-snap-align: start;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .vertical-video-player {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            background-color: black;
+        }
+
+        .vertical-video-info {
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            padding: var(--spacing-lg);
+            background: linear-gradient(transparent, rgba(0,0,0,0.7));
+            z-index: 10;
+        }
+
+        .vertical-video-actions {
+            position: absolute;
+            right: var(--spacing-md);
+            bottom: 100px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: var(--spacing-md);
+            z-index: 20;
+        }
+
+        .vertical-video-actions button {
+            background: none;
+            border: none;
+            color: white;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            font-size: 0.8em;
+        }
+
+        .vertical-video-actions button i {
+            font-size: 2em;
+            margin-bottom: 5px;
+        }
+
+        .video-info h3 {
+            margin-top: 0;
+            margin-bottom: var(--spacing-sm);
+            font-size: 1.2em;
+            color: var(--text-color);
+        }
+
+        .video-info p {
+            font-size: 0.9em;
+            color: var(--light-gray);
+            margin-bottom: var(--spacing-sm);
+            line-height: 1.4;
+        }
+
+        .creator-info {
+            display: flex;
+            align-items: center;
+            gap: var(--spacing-sm);
+            margin-bottom: var(--spacing-md);
+        }
+
+        .creator-avatar {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            object-fit: cover;
+            border: 2px solid var(--accent-color);
+        }
+
+        .creator-name {
+            font-weight: 600;
+            color: var(--text-color);
+        }
+
+        /* Estilo para o feed de explorar (grid) */
+        .explore-feed {
+            display: none;
+            flex-grow: 1;
+            padding: var(--spacing-lg);
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+            gap: var(--spacing-md);
+            max-width: 1200px;
+            margin: var(--spacing-md) auto;
+        }
+
+        .video-container {
+            background-color: var(--card-bg-color);
+            border-radius: var(--border-radius);
+            overflow: hidden;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
+            transition: transform 0.2s ease;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .video-container:hover {
+            transform: translateY(-5px);
+        }
+
+        .video-player {
+            width: 100%;
+            height: 400px;
+            object-fit: cover;
+            background-color: black;
+        }
+
+        .video-actions {
+            display: flex;
+            justify-content: space-around;
+            margin-top: var(--spacing-sm);
+            border-top: 1px solid #333;
+            padding-top: var(--spacing-sm);
+        }
+
+        .video-actions button {
+            background: none;
+            border: none;
+            color: var(--light-gray);
+            font-size: 1.1em;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 5px;
+            transition: color 0.2s ease;
+        }
+
+        .video-actions button:hover {
+            color: var(--accent-color);
+        }
+
+        .liked {
+            color: var(--accent-color) !important;
+        }
+
+        /* Restante do CSS permanece igual */
+        /* ... [mantenha todos os outros estilos existentes] ... */
+    </style>
+</head>
+<body>
+    <!-- Cabeçalho -->
+    <header class="main-header">
+        <a href="#" class="logo">Rollit</a>
+        <nav class="main-nav">
+            <ul>
+                <li><a href="#upload" id="open-upload-modal" style="display: none;">Upload</a></li>
+                <li><a href="#" id="for-you-tab" class="active-tab">For You</a></li>
+                <li><a href="#" id="explore-tab">Explorar</a></li>
+                <li><a href="#profile" id="nav-profile-link">Meu Perfil</a></li>
+                <li><a href="#login" id="auth-link">Login / Registro</a></li>
+            </ul>
+        </nav>
+    </header>
+
+    <!-- Container de autenticação -->
+    <div id="auth-required-container">
+        <h2>Bem-vindo ao Rollit!</h2>
+        <p>Faça login ou crie uma conta para explorar e compartilhar vídeos incríveis.</p>
+        <div class="auth-buttons">
+            <button id="show-login-btn">Fazer Login</button>
+            <button id="show-signup-btn">Criar Conta</button>
+        </div>
+    </div>
+
+    <!-- Feed Vertical (For You) -->
+    <div class="vertical-feed" id="for-you-feed"></div>
+
+    <!-- Feed de Explorar (Grid) -->
+    <div class="explore-feed" id="explore-feed">
+        <p id="loading-message">Carregando vídeos...</p>
+    </div>
+
+    <!-- [Mantenha todos os modais existentes] -->
+
+    <script>
+        // [Mantenha toda a configuração inicial do Firebase e variáveis]
+
+        // Função para criar um card de vídeo vertical (estilo TikTok)
+        function createVerticalVideoCard(video) {
+            const isLiked = currentUser && userPreferences.likedVideos && 
+                          userPreferences.likedVideos.includes(video.id);
+            
+            const videoContainer = document.createElement('div');
+            videoContainer.className = 'vertical-video-container';
+            videoContainer.dataset.videoId = video.id;
+            
+            videoContainer.innerHTML = `
+                <video class="vertical-video-player" controls loop muted playsinline>
+                    <source src="${video.videoUrl}" type="video/mp4">
+                </video>
+                <div class="vertical-video-info">
+                    <div class="creator-info">
+                        <img src="${video.creatorAvatar || DEFAULT_AVATAR_URL}" alt="Avatar" class="creator-avatar">
+                        <p class="creator-name">${video.creator}</p>
+                    </div>
+                    <h3>${video.title}</h3>
+                    <p>${video.description}</p>
+                    <p class="video-tags">${video.tags ? video.tags.split(',').map(tag => `<span>#${tag.trim()}</span>`).join(' ') : ''}</p>
+                </div>
+                <div class="vertical-video-actions">
+                    <button class="like-btn ${isLiked ? 'liked' : ''}" data-video-id="${video.id}">
+                        <i class="fas fa-heart"></i>
+                        <span class="like-count">${video.likes || 0}</span>
+                    </button>
+                    <button class="comment-btn">
+                        <i class="fas fa-comment"></i>
+                        <span>${video.commentsCount || 0}</span>
+                    </button>
+                    <button class="share-btn">
+                        <i class="fas fa-share"></i>
+                    </button>
+                </div>
+            `;
+            
+            // Auto-play quando o vídeo estiver visível
+            const videoElement = videoContainer.querySelector('.vertical-video-player');
+            
+            const observer = new IntersectionObserver((entries) => {
+                entries.forEach(entry => {
+                    if (entry.isIntersecting) {
+                        videoElement.play().catch(e => console.log("Auto-play prevented:", e));
+                    } else {
+                        videoElement.pause();
+                    }
+                });
+            }, { threshold: 0.7 });
+            
+            observer.observe(videoContainer);
+            
+            return videoContainer;
+        }
+
+        // Modificar a função loadVideos para carregar diferentes feeds
+        async function loadVideos(feedType = 'forYou') {
+            loadingMessage.textContent = 'Carregando vídeos...';
+            
+            try {
+                let query = db.collection('videos');
+                
+                if (feedType === 'forYou' && currentUser && userPreferences.likedTags.length > 0) {
+                    // Feed personalizado baseado nas tags curtidas
+                    query = query.where('tags', 'array-contains-any', userPreferences.likedTags)
+                                .orderBy('createdAt', 'desc')
+                                .limit(20);
+                } else {
+                    // Feed geral (explorar)
+                    query = query.orderBy('createdAt', 'desc').limit(20);
+                }
+                
+                const snapshot = await query.get();
+                
+                if (snapshot.empty) {
+                    loadingMessage.textContent = feedType === 'forYou' ? 
+                        'Nenhum vídeo recomendado. Comece a curtir vídeos para personalizar seu feed!' : 
+                        'Nenhum vídeo encontrado. Seja o primeiro a enviar!';
+                    return;
+                }
+                
+                // Limpar o feed atual
+                if (feedType === 'forYou') {
+                    document.getElementById('explore-feed').style.display = 'none';
+                    const forYouFeed = document.getElementById('for-you-feed');
+                    forYouFeed.innerHTML = '';
+                    forYouFeed.style.display = 'flex';
+                    
+                    snapshot.forEach(doc => {
+                        try {
+                            const video = doc.data();
+                            video.id = doc.id;
+                            if (video.videoUrl) {
+                                const videoCard = createVerticalVideoCard(video);
+                                forYouFeed.appendChild(videoCard);
+                            }
+                        } catch (error) {
+                            console.error('Erro ao processar vídeo:', error);
+                        }
+                    });
+                } else {
+                    document.getElementById('for-you-feed').style.display = 'none';
+                    const exploreFeed = document.getElementById('explore-feed');
+                    exploreFeed.innerHTML = '';
+                    exploreFeed.style.display = 'grid';
+                    
+                    snapshot.forEach(doc => {
+                        try {
+                            const video = doc.data();
+                            video.id = doc.id;
+                            if (video.videoUrl) {
+                                const videoCard = createVideoCard(video); // Usa a função original para grid
+                                exploreFeed.appendChild(videoCard);
+                            }
+                        } catch (error) {
+                            console.error('Erro ao processar vídeo:', error);
+                        }
+                    });
+                }
+                
+                // Adicionar event listeners para os botões de like
+                document.querySelectorAll('.like-btn').forEach(btn => {
+                    btn.addEventListener('click', handleLike);
+                });
+                
+            } catch (error) {
+                console.error('Erro ao carregar vídeos:', error);
+                loadingMessage.textContent = 'Erro ao carregar vídeos. Verifique sua conexão.';
+            } finally {
+                loadingMessage.style.display = 'none';
+            }
+        }
+
+        // [Mantenha todas as outras funções existentes]
+
+        // Atualizar os event listeners das abas
+        forYouTab.addEventListener('click', (e) => {
+            e.preventDefault();
+            forYouTab.classList.add('active-tab');
+            exploreTab.classList.remove('active-tab');
+            loadVideos('forYou');
+        });
+
+        exploreTab.addEventListener('click', (e) => {
+            e.preventDefault();
+            exploreTab.classList.add('active-tab');
+            forYouTab.classList.remove('active-tab');
+            loadVideos('explore');
+        });
+
+        // [Mantenha o resto do código JavaScript existente]
+    </script>
+</body>
+</html>
