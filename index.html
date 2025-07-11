@@ -6,7 +6,6 @@
     <title>Rollit - Seu Feed de Vídeos Curtos</title>
     
     <style>
-        /* ... (Mantenha TODO o seu CSS anterior aqui, exatamente como estava, incluindo os estilos do modal) ... */
         @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600;700&display=swap');
 
         :root {
@@ -426,13 +425,13 @@
 
     <script>
         // COLOQUE SUAS CREDENCIAIS DO FIREBASE AQUI!
-        // As credenciais que você copiou do Console do Firebase (Passo 2.3)
+        // As credenciais que você copiou do Console do Firebase
         const firebaseConfig = {
              apiKey: "AIzaSyAg1-sK-1S5Nl5O7DKXKzeQIBteMC4dJq8",
              authDomain: "rollit-fd7d5.firebaseapp.com",
              projectId: "rollit-fd7d5",
              storageBucket: "rollit-fd7d5.firebasestorage.app",
-             messagingSenderId: "1016509530827"
+             messagingSenderId: "1016509530827", // Corrigido: Removida a aspas duplas extra
              appId: "1:1016509530827:web:d182f29fc098b53c07914e"
         };
 
@@ -457,11 +456,17 @@
             const videoFeedContainer = document.getElementById('video-feed-container');
             const loadingMessage = document.getElementById('loading-message');
 
-            // --- Funções de Controle do Modal (iguais às anteriores) ---
-            openUploadModalBtn.addEventListener('click', (event) => {
-                event.preventDefault();
-                uploadModal.classList.add('active');
-            });
+            // --- Funções de Controle do Modal ---
+            if (openUploadModalBtn) { // Adicionado um check para garantir que o botão existe
+                openUploadModalBtn.addEventListener('click', (event) => {
+                    event.preventDefault();
+                    console.log('Botão Upload clicado!'); // Log para depuração
+                    uploadModal.classList.add('active');
+                    console.log('Modal active class added:', uploadModal.classList.contains('active')); // Log para depuração
+                });
+            } else {
+                console.error('Erro: Botão de upload (ID "open-upload-modal") não encontrado no HTML.');
+            }
 
             closeUploadModalBtn.addEventListener('click', () => {
                 uploadModal.classList.remove('active');
@@ -620,7 +625,7 @@
                 }
             });
 
-            // --- Funções para botões de navegação (já existentes) ---
+            // --- Funções para botões de navegação ---
             function setupNavButtons() {
                 const exploreBtn = document.querySelector('a[href="#explore"]');
                 const profileBtn = document.querySelector('a[href="#profile"]');
