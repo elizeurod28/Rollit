@@ -74,6 +74,11 @@
             color: var(--text-color);
         }
 
+        .active-tab {
+            color: var(--accent-color) !important;
+            border-bottom: 2px solid var(--accent-color);
+        }
+
         .video-feed {
             flex-grow: 1;
             padding: var(--spacing-lg);
@@ -433,6 +438,28 @@
         #auth-required-container .auth-buttons button:hover {
             background-color: #d1306d;
         }
+
+        .feed-tabs {
+            display: flex;
+            justify-content: center;
+            margin-bottom: var(--spacing-md);
+            border-bottom: 1px solid #333;
+        }
+
+        .feed-tab {
+            padding: var(--spacing-sm) var(--spacing-md);
+            cursor: pointer;
+            margin: 0 var(--spacing-sm);
+        }
+
+        .feed-tab.active {
+            color: var(--accent-color);
+            border-bottom: 2px solid var(--accent-color);
+        }
+
+        .liked {
+            color: var(--accent-color) !important;
+        }
     </style>
 </head>
 <body>
@@ -441,7 +468,8 @@
         <nav class="main-nav">
             <ul>
                 <li><a href="#upload" id="open-upload-modal" style="display: none;">Upload</a></li>
-                <li><a href="#explore">Explorar</a></li>
+                <li><a href="#" id="for-you-tab" class="active-tab">For You</a></li>
+                <li><a href="#" id="explore-tab">Explorar</a></li>
                 <li><a href="#profile" id="nav-profile-link">Meu Perfil</a></li>
                 <li><a href="#login" id="auth-link">Login / Registro</a></li>
             </ul>
@@ -541,7 +569,7 @@
     <script src="https://www.gstatic.com/firebasejs/9.6.0/firebase-auth-compat.js"></script>
 
     <script>
-        // Configuração do Firebase (SUBSTITUA PELAS SUAS CREDENCIAIS REAIS)
+        // Configuração do Firebase
         const firebaseConfig = {
             apiKey: "AIzaSyAg1-sK-1S5Nl5O7DKXKzeQIBteMC4dJq8",
             authDomain: "rollit-fd7d5.firebaseapp.com",
@@ -561,12 +589,13 @@
             alert("Erro crítico: Não foi possível inicializar o serviço. Recarregue a página.");
         }
 
-        // Configurações do Cloudinary (SUBSTITUA COM SEUS DADOS)
-const CLOUDINARY_CONFIG = {
-    cloudName: 'duvpcwzjk',
-    uploadPreset: 'ubycfv3n',
-    apiUrl: `https://api.cloudinary.com/v1_1/duvpcwzjk/video/upload`
-};
+        // Configurações do Cloudinary
+        const CLOUDINARY_CONFIG = {
+            cloudName: 'duvpcwzjk',
+            uploadPreset: 'ubycfv3n',
+            apiUrl: `https://api.cloudinary.com/v1_1/duvpcwzjk/video/upload`
+        };
+
         // URL do avatar padrão
         const DEFAULT_AVATAR_URL = 'https://cdn.pixabay.com/photo/2015/10/05/22/37/blank-profile-picture-973460_960_720.png';
 
@@ -577,6 +606,10 @@ const CLOUDINARY_CONFIG = {
 
         // Variável para armazenar o usuário logado
         let currentUser = null;
+        let userPreferences = {
+            likedTags: [],
+            likedVideos: []
+        };
 
         // Referências aos elementos HTML
         const uploadModal = document.getElementById('upload-modal');
@@ -590,6 +623,8 @@ const CLOUDINARY_CONFIG = {
         const uploadProgress = document.getElementById('upload-progress');
         const loadingMessage = document.getElementById('loading-message');
         const videoFeedContainer = document.getElementById('video-feed-container');
+        const forYouTab = document.getElementById('for-you-tab');
+        const exploreTab = document.getElementById('explore-tab');
 
         // Elementos do Modal de Registro
         const signupModal = document.getElementById('signup-modal');
@@ -676,6 +711,21 @@ const CLOUDINARY_CONFIG = {
         showLoginBtn.addEventListener('click', () => openModal(loginModal));
         showSignupBtn.addEventListener('click', () => openModal(signupModal));
 
+        // Event listeners para as abas
+        forYouTab.addEventListener('click', (e) => {
+            e.preventDefault();
+            forYouTab.classList.add('active-tab');
+            exploreTab.classList.remove('active-tab');
+            loadVideos('forYou');
+        });
+
+        exploreTab.addEventListener('click', (e) => {
+            e.preventDefault();
+            exploreTab.classList.add('active-tab');
+            forYouTab.classList.remove('active-tab');
+            loadVideos('explore');
+        });
+
         // --- Lógica de Registro ---
         signupForm.addEventListener('submit', async (event) => {
             event.preventDefault();
@@ -706,6 +756,12 @@ const CLOUDINARY_CONFIG = {
                     createdAt: firebase.firestore.FieldValue.serverTimestamp(),
                     profileName: user.email.split('@')[0],
                     profileAvatar: DEFAULT_AVATAR_URL
+                });
+
+                // Criar documento de preferências
+                await db.collection('userPreferences').doc(user.uid).set({
+                    likedTags: [],
+                    likedVideos: []
                 });
 
                 showAuthMessage(signupMessage, 'Conta criada com sucesso! Você está logado.', false);
@@ -778,6 +834,12 @@ const CLOUDINARY_CONFIG = {
                         createdAt: firebase.firestore.FieldValue.serverTimestamp()
                     });
                     console.log('Novo usuário Google salvo no Firestore.');
+                    
+                    // Criar documento de preferências
+                    await db.collection('userPreferences').doc(user.uid).set({
+                        likedTags: [],
+                        likedVideos: []
+                    });
                 }
 
                 showAuthMessage(signupMessage, 'Login com Google realizado com sucesso!', false);
@@ -837,6 +899,7 @@ const CLOUDINARY_CONFIG = {
                 console.log('Usuário logado:', user.email, 'UID:', user.uid);
 
                 try {
+                    // Carregar dados do usuário
                     const userDocRef = db.collection('users').doc(user.uid);
                     const doc = await userDocRef.get();
                     if (doc.exists) {
@@ -855,6 +918,19 @@ const CLOUDINARY_CONFIG = {
                         currentUser.profileAvatar = user.photoURL || DEFAULT_AVATAR_URL;
                         console.log('Documento de usuário criado/atualizado no Firestore para:', user.email);
                     }
+
+                    // Carregar preferências do usuário
+                    const userPrefs = await db.collection('userPreferences').doc(user.uid).get();
+                    if (userPrefs.exists) {
+                        userPreferences = userPrefs.data();
+                        console.log('Preferências do usuário:', userPreferences);
+                    } else {
+                        await db.collection('userPreferences').doc(user.uid).set({
+                            likedTags: [],
+                            likedVideos: []
+                        });
+                        userPreferences = { likedTags: [], likedVideos: [] };
+                    }
                 } catch (firestoreError) {
                     console.error('Erro ao buscar/criar documento de usuário no Firestore:', firestoreError);
                 }
@@ -868,10 +944,12 @@ const CLOUDINARY_CONFIG = {
                 navAuthLink.removeEventListener('click', openModal);
                 navAuthLink.addEventListener('click', handleLogout);
 
-                loadVideos();
+                // Carregar o feed "For You" por padrão
+                loadVideos('forYou');
 
             } else {
                 currentUser = null;
+                userPreferences = { likedTags: [], likedVideos: [] };
                 console.log('Nenhum usuário logado.');
 
                 authRequiredContainer.style.display = 'flex';
@@ -891,6 +969,12 @@ const CLOUDINARY_CONFIG = {
         function createVideoCard(video) {
             const videoContainer = document.createElement('section');
             videoContainer.className = 'video-container';
+            videoContainer.dataset.videoId = video.id;
+            
+            // Verificar se o vídeo já foi curtido
+            const isLiked = currentUser && userPreferences.likedVideos && 
+                           userPreferences.likedVideos.includes(video.id);
+            
             videoContainer.innerHTML = `
                 <video class="video-player" controls loop muted playsinline>
                     <source src="${video.videoUrl}" type="video/mp4">
@@ -905,7 +989,9 @@ const CLOUDINARY_CONFIG = {
                     <p>${video.description}</p>
                     <p class="video-tags">${video.tags ? video.tags.split(',').map(tag => `<span>#${tag.trim()}</span>`).join(' ') : ''}</p>
                     <div class="video-actions">
-                        <button><i class="fas fa-heart"></i> ${video.likes || 0}</button>
+                        <button class="like-btn ${isLiked ? 'liked' : ''}" data-video-id="${video.id}">
+                            <i class="fas fa-heart"></i> <span class="like-count">${video.likes || 0}</span>
+                        </button>
                         <button><i class="fas fa-comment"></i> ${video.commentsCount || 0}</button>
                         <button><i class="fas fa-share"></i> Compartilhar</button>
                     </div>
@@ -915,21 +1001,37 @@ const CLOUDINARY_CONFIG = {
         }
 
         // --- Função para Carregar Vídeos do Firestore ---
-        async function loadVideos() {
+        async function loadVideos(feedType = 'forYou') {
             loadingMessage.textContent = 'Carregando vídeos...';
             videoFeedContainer.innerHTML = '';
-
+            
             try {
-                const snapshot = await db.collection('videos').orderBy('createdAt', 'desc').get();
+                let query = db.collection('videos');
+                
+                if (feedType === 'forYou' && currentUser && userPreferences.likedTags.length > 0) {
+                    // Filtra vídeos por tags que o usuário curtiu
+                    query = query.where('tags', 'array-contains-any', userPreferences.likedTags)
+                                .orderBy('createdAt', 'desc')
+                                .limit(20);
+                } else {
+                    // Feed Explore - todos os vídeos mais recentes
+                    query = query.orderBy('createdAt', 'desc').limit(20);
+                }
+                
+                const snapshot = await query.get();
+                
                 if (snapshot.empty) {
-                    loadingMessage.textContent = 'Nenhum vídeo encontrado. Seja o primeiro a enviar!';
+                    loadingMessage.textContent = feedType === 'forYou' ? 
+                        'Nenhum vídeo recomendado. Comece a curtir vídeos para personalizar seu feed!' : 
+                        'Nenhum vídeo encontrado. Seja o primeiro a enviar!';
                     videoFeedContainer.appendChild(loadingMessage);
                     return;
                 }
-
+                
                 snapshot.forEach(doc => {
                     try {
                         const video = doc.data();
+                        video.id = doc.id; // Adiciona o ID do documento
                         if (video.videoUrl) {
                             const videoCard = createVideoCard(video);
                             videoFeedContainer.appendChild(videoCard);
@@ -939,12 +1041,99 @@ const CLOUDINARY_CONFIG = {
                     }
                 });
                 
+                // Adicionar event listeners para os botões de like
+                document.querySelectorAll('.like-btn').forEach(btn => {
+                    btn.addEventListener('click', handleLike);
+                });
+                
             } catch (error) {
                 console.error('Erro ao carregar vídeos:', error);
                 loadingMessage.textContent = 'Erro ao carregar vídeos. Verifique sua conexão.';
                 videoFeedContainer.appendChild(loadingMessage);
             } finally {
                 loadingMessage.style.display = 'none';
+            }
+        }
+
+        // Função para lidar com likes
+        async function handleLike(event) {
+            if (!currentUser) {
+                alert('Faça login para curtir vídeos!');
+                openModal(loginModal);
+                return;
+            }
+            
+            const videoId = event.currentTarget.dataset.videoId;
+            const videoRef = db.collection('videos').doc(videoId);
+            const userPrefsRef = db.collection('userPreferences').doc(currentUser.uid);
+            
+            try {
+                // Verificar se o vídeo já foi curtido
+                const isLiked = userPreferences.likedVideos && 
+                                userPreferences.likedVideos.includes(videoId);
+                
+                // Atualizar contagem de likes no vídeo
+                await db.runTransaction(async (transaction) => {
+                    const videoDoc = await transaction.get(videoRef);
+                    if (!videoDoc.exists) throw "Documento não existe!";
+                    
+                    const currentLikes = videoDoc.data().likes || 0;
+                    const newLikes = isLiked ? currentLikes - 1 : currentLikes + 1;
+                    transaction.update(videoRef, { likes: newLikes });
+                    
+                    // Atualizar preferências do usuário
+                    const userPrefsDoc = await transaction.get(userPrefsRef);
+                    let newLikedVideos = [];
+                    let newLikedTags = [];
+                    
+                    if (userPrefsDoc.exists) {
+                        const prefs = userPrefsDoc.data();
+                        newLikedVideos = [...(prefs.likedVideos || [])];
+                        newLikedTags = [...(prefs.likedTags || [])];
+                    }
+                    
+                    if (isLiked) {
+                        newLikedVideos = newLikedVideos.filter(id => id !== videoId);
+                    } else {
+                        newLikedVideos.push(videoId);
+                        
+                        // Adicionar tags do vídeo às preferências (se não existirem)
+                        const videoTags = videoDoc.data().tags ? 
+                            videoDoc.data().tags.split(',').map(tag => tag.trim()) : [];
+                        
+                        videoTags.forEach(tag => {
+                            if (!newLikedTags.includes(tag)) {
+                                newLikedTags.push(tag);
+                            }
+                        });
+                    }
+                    
+                    transaction.set(userPrefsRef, {
+                        likedVideos: newLikedVideos,
+                        likedTags: newLikedTags
+                    }, { merge: true });
+                    
+                    // Atualizar estado local
+                    userPreferences.likedVideos = newLikedVideos;
+                    userPreferences.likedTags = newLikedTags;
+                });
+                
+                // Atualizar UI
+                const likeBtn = event.currentTarget;
+                const likeCountSpan = likeBtn.querySelector('.like-count');
+                const currentCount = parseInt(likeCountSpan.textContent);
+                
+                if (likeBtn.classList.contains('liked')) {
+                    likeBtn.classList.remove('liked');
+                    likeCountSpan.textContent = currentCount - 1;
+                } else {
+                    likeBtn.classList.add('liked');
+                    likeCountSpan.textContent = currentCount + 1;
+                }
+                
+            } catch (error) {
+                console.error('Erro ao atualizar like:', error);
+                alert('Erro ao curtir o vídeo. Tente novamente.');
             }
         }
 
