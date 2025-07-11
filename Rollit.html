@@ -1,0 +1,617 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Rollit - Seu Feed de Vídeos Curtos</title>
+    
+    <style>
+        /* Importa uma fonte moderna do Google Fonts */
+        @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600;700&display=swap');
+
+        :root {
+            /* Definição de variáveis CSS para cores e espaçamento */
+            --primary-bg-color: #121212; /* Fundo escuro */
+            --secondary-bg-color: #242424; /* Fundo de elementos */
+            --text-color: #f0f0f0; /* Cor do texto claro */
+            --accent-color: #FF4081; /* Cor de destaque (rosa/magenta) */
+            --light-gray: #a0a0a0; /* Cinza claro para detalhes */
+            --border-radius: 10px;
+            --spacing-sm: 8px;
+            --spacing-md: 16px;
+            --spacing-lg: 24px;
+        }
+
+        /* Reset básico e tipografia */
+        body {
+            margin: 0;
+            font-family: 'Poppins', sans-serif;
+            background-color: var(--primary-bg-color);
+            color: var(--text-color);
+            line-height: 1.6;
+            display: flex;
+            flex-direction: column; /* Para footer ficar no final */
+            min-height: 100vh; /* Ocupa a altura total da viewport */
+            overflow-x: hidden; /* Evita scroll horizontal */
+        }
+
+        a {
+            color: var(--accent-color);
+            text-decoration: none;
+            transition: color 0.3s ease;
+        }
+
+        a:hover {
+            color: #FF80AB; /* Um tom mais claro no hover */
+        }
+
+        /* Cabeçalho */
+        .main-header {
+            background-color: var(--secondary-bg-color);
+            padding: var(--spacing-md) var(--spacing-lg);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.3);
+            z-index: 10; /* Garante que fique acima de outros elementos */
+            position: sticky; /* Fica fixo no topo ao rolar */
+            top: 0;
+        }
+
+        .main-header .logo h1 {
+            margin: 0;
+            font-size: 1.8em;
+            color: var(--accent-color);
+            letter-spacing: 1px;
+        }
+
+        .main-nav ul {
+            list-style: none;
+            margin: 0;
+            padding: 0;
+            display: flex;
+        }
+
+        .main-nav ul li {
+            margin-left: var(--spacing-lg);
+        }
+
+        .main-nav ul li a {
+            color: var(--text-color);
+            font-weight: 600;
+            padding: var(--spacing-sm) var(--spacing-md);
+            border-radius: var(--border-radius);
+            transition: background-color 0.3s ease;
+        }
+
+        .main-nav ul li a:hover {
+            background-color: var(--primary-bg-color);
+        }
+
+        /* Feed de Vídeos */
+        .video-feed {
+            flex-grow: 1; /* Ocupa o espaço restante */
+            display: flex;
+            flex-direction: column;
+            align-items: center; /* Centraliza os vídeos */
+            padding: var(--spacing-lg) 0; /* Espaçamento superior e inferior */
+        }
+
+        .video-container {
+            background-color: var(--secondary-bg-color);
+            border-radius: var(--border-radius);
+            margin-bottom: var(--spacing-lg);
+            width: 90%; /* Largura padrão */
+            max-width: 500px; /* Limite para não ficar muito largo em telas grandes */
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.4);
+            overflow: hidden; /* Garante que o vídeo e info não vazem */
+            display: flex;
+            flex-direction: column;
+            transition: transform 0.3s ease-in-out; /* Animação leve ao rolar */
+        }
+
+        .video-container:hover {
+            transform: translateY(-5px); /* Efeito de elevação no hover */
+        }
+
+        .video-player {
+            width: 100%;
+            height: auto; /* Altura automática para manter proporção */
+            display: block; /* Remove espaço extra abaixo do vídeo */
+            background-color: black; /* Fundo preto para o player */
+        }
+
+        .video-info {
+            padding: var(--spacing-md);
+            display: flex;
+            flex-direction: column;
+            gap: var(--spacing-sm);
+        }
+
+        .creator-info {
+            display: flex;
+            align-items: center;
+            gap: var(--spacing-sm);
+        }
+
+        .creator-avatar {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%; /* Torna a imagem redonda */
+            object-fit: cover; /* Garante que a imagem preencha o círculo */
+            border: 2px solid var(--accent-color);
+        }
+
+        .creator-name {
+            font-weight: 600;
+            margin: 0;
+            color: var(--text-color);
+        }
+
+        .video-description {
+            margin: 0;
+            color: var(--light-gray);
+            font-size: 0.95em;
+        }
+
+        .video-actions {
+            display: flex;
+            gap: var(--spacing-sm);
+            margin-top: var(--spacing-sm);
+        }
+
+        .action-btn {
+            background-color: var(--primary-bg-color);
+            color: var(--text-color);
+            border: none;
+            padding: var(--spacing-sm) var(--spacing-md);
+            border-radius: var(--border-radius);
+            cursor: pointer;
+            font-weight: 600;
+            transition: background-color 0.3s ease, transform 0.2s ease;
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+
+        .action-btn:hover {
+            background-color: rgba(255, 64, 129, 0.2); /* Tom mais claro da cor de destaque */
+            transform: translateY(-2px);
+        }
+
+        /* Rodapé */
+        .main-footer {
+            background-color: var(--secondary-bg-color);
+            color: var(--light-gray);
+            text-align: center;
+            padding: var(--spacing-md);
+            font-size: 0.9em;
+            margin-top: auto; /* Empurra o footer para o final */
+            width: 100%;
+            box-shadow: 0 -2px 10px rgba(0, 0, 0, 0.3);
+        }
+
+        /* Media Queries para Responsividade */
+        @media (max-width: 768px) {
+            .main-header {
+                flex-direction: column;
+                text-align: center;
+                padding: var(--spacing-md);
+            }
+
+            .main-nav ul {
+                margin-top: var(--spacing-md);
+                justify-content: center;
+            }
+
+            .main-nav ul li {
+                margin: 0 var(--spacing-sm);
+            }
+
+            .video-container {
+                width: 95%; /* Ocupa mais espaço em telas menores */
+            }
+        }
+
+        @media (max-width: 480px) {
+            .main-header .logo h1 {
+                font-size: 1.5em;
+            }
+
+            .main-nav ul li a {
+                padding: var(--spacing-sm);
+                font-size: 0.9em;
+            }
+
+            .action-btn {
+                font-size: 0.85em;
+                padding: 6px 10px;
+            }
+        }
+
+        /* --- Estilos para o Modal de Upload --- */
+        #upload-modal {
+            position: fixed; /* Fixa o modal na tela */
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.8); /* Fundo escuro semitransparente */
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 1000; /* Garante que fique acima de tudo */
+            opacity: 0; /* Começa invisível */
+            visibility: hidden; /* Esconde completamente */
+            transition: opacity 0.3s ease, visibility 0.3s ease;
+        }
+
+        #upload-modal.active {
+            opacity: 1; /* Torna visível */
+            visibility: visible;
+        }
+
+        .modal-content {
+            background-color: var(--secondary-bg-color);
+            padding: var(--spacing-lg);
+            border-radius: var(--border-radius);
+            width: 90%;
+            max-width: 600px;
+            box-shadow: 0 8px 30px rgba(0, 0, 0, 0.6);
+            position: relative;
+            transform: translateY(-20px); /* Começa um pouco acima */
+            transition: transform 0.3s ease-out;
+        }
+
+        #upload-modal.active .modal-content {
+            transform: translateY(0); /* Desliza para a posição final */
+        }
+
+        .close-button {
+            position: absolute;
+            top: var(--spacing-md);
+            right: var(--spacing-md);
+            background: none;
+            border: none;
+            color: var(--light-gray);
+            font-size: 1.8em;
+            cursor: pointer;
+            transition: color 0.3s ease;
+        }
+
+        .close-button:hover {
+            color: var(--accent-color);
+        }
+
+        .modal-content h2 {
+            margin-top: 0;
+            color: var(--accent-color);
+            text-align: center;
+            margin-bottom: var(--spacing-lg);
+        }
+
+        .upload-form label {
+            display: block;
+            margin-bottom: var(--spacing-sm);
+            font-weight: 600;
+            color: var(--text-color);
+        }
+
+        .upload-form input[type="file"] {
+            width: 100%;
+            padding: var(--spacing-md);
+            margin-bottom: var(--spacing-md);
+            border: 2px dashed var(--light-gray);
+            background-color: var(--primary-bg-color);
+            color: var(--text-color);
+            border-radius: var(--border-radius);
+            cursor: pointer;
+            box-sizing: border-box; /* Inclui padding e border na largura total */
+        }
+
+        .upload-form input[type="file"]::file-selector-button {
+            background-color: var(--accent-color);
+            color: white;
+            border: none;
+            padding: var(--spacing-sm) var(--spacing-md);
+            border-radius: var(--border-radius);
+            cursor: pointer;
+            margin-right: var(--spacing-sm);
+            transition: background-color 0.3s ease;
+        }
+
+        .upload-form input[type="file"]::file-selector-button:hover {
+            background-color: #d1306d; /* Tom mais escuro */
+        }
+
+        .upload-form input[type="text"],
+        .upload-form textarea {
+            width: 100%;
+            padding: var(--spacing-md);
+            margin-bottom: var(--spacing-md);
+            border: 1px solid var(--light-gray);
+            background-color: var(--primary-bg-color);
+            color: var(--text-color);
+            border-radius: var(--border-radius);
+            box-sizing: border-box;
+        }
+
+        .upload-form textarea {
+            resize: vertical; /* Permite redimensionar verticalmente */
+            min-height: 80px;
+        }
+
+        .upload-form button[type="submit"] {
+            background-color: var(--accent-color);
+            color: white;
+            border: none;
+            padding: var(--spacing-md) var(--spacing-lg);
+            border-radius: var(--border-radius);
+            cursor: pointer;
+            font-size: 1.1em;
+            font-weight: 600;
+            width: 100%;
+            transition: background-color 0.3s ease;
+        }
+
+        .upload-form button[type="submit"]:hover {
+            background-color: #d1306d;
+        }
+
+        /* Indicador de progresso (opcional, para JS) */
+        .progress-bar-container {
+            width: 100%;
+            background-color: var(--primary-bg-color);
+            border-radius: var(--border-radius);
+            margin-top: var(--spacing-md);
+            overflow: hidden;
+            height: 10px;
+            display: none; /* Escondido por padrão */
+        }
+
+        .progress-bar {
+            height: 100%;
+            width: 0%;
+            background-color: var(--accent-color);
+            border-radius: var(--border-radius);
+            transition: width 0.3s ease;
+        }
+    </style>
+</head>
+<body>
+
+    <header class="main-header">
+        <div class="logo">
+            <h1>Rollit</h1>
+        </div>
+        <nav class="main-nav">
+            <ul>
+                <li><a href="#upload" id="open-upload-modal">Upload</a></li>
+                <li><a href="#explore">Explorar</a></li>
+                <li><a href="#profile">Meu Perfil</a></li>
+            </ul>
+        </nav>
+    </header>
+
+    <main class="video-feed">
+        <section class="video-container">
+            <video class="video-player" src="video1.mp4" controls muted loop autoplay></video>
+            <div class="video-info">
+                <div class="creator-info">
+                    <img src="avatar1.jpg" alt="Avatar do Criador" class="creator-avatar">
+                    <p class="creator-name">@CriadorLegal</p>
+                </div>
+                <p class="video-description">Um vídeo incrível sobre natureza! #natureza #curto</p>
+                <div class="video-actions">
+                    <button class="action-btn like-btn">❤️ 1.2K</button>
+                    <button class="action-btn comment-btn">💬 50</button>
+                    <button class="action-btn share-btn">🔗 Compartilhar</button>
+                </div>
+            </div>
+        </section>
+
+        <section class="video-container">
+            <video class="video-player" src="video2.mp4" controls muted loop></video>
+            <div class="video-info">
+                <div class="creator-info">
+                    <img src="avatar2.jpg" alt="Avatar do Criador" class="creator-avatar">
+                    <p class="creator-name">@ReceitasDaVovo</p>
+                </div>
+                <p class="video-description">Receita super fácil de bolo de cenoura! 🥕 #receita #culinaria</p>
+                <div class="video-actions">
+                    <button class="action-btn like-btn">❤️ 800</button>
+                    <button class="action-btn comment-btn">💬 30</button>
+                    <button class="action-btn share-btn">🔗 Compartilhar</button>
+                </div>
+            </div>
+        </section>
+
+        </main>
+
+    <footer class="main-footer">
+        <p>&copy; 2025 Rollit. Todos os direitos reservados.</p>
+    </footer>
+
+    <div id="upload-modal">
+        <div class="modal-content">
+            <button class="close-button" id="close-upload-modal">&times;</button>
+            <h2>Enviar Novo Vídeo</h2>
+            <form class="upload-form" id="video-upload-form">
+                <label for="video-file">Selecione o Vídeo:</label>
+                <input type="file" id="video-file" name="videoFile" accept="video/*" required>
+
+                <label for="video-title">Título do Vídeo:</label>
+                <input type="text" id="video-title" name="videoTitle" placeholder="Um título cativante para seu vídeo" required>
+
+                <label for="video-description">Descrição:</label>
+                <textarea id="video-description" name="videoDescription" placeholder="Conte mais sobre seu vídeo..."></textarea>
+
+                <label for="video-tags">Hashtags (separadas por vírgula):</label>
+                <input type="text" id="video-tags" name="videoTags" placeholder="#natureza, #humor, #dicas">
+
+                <div class="progress-bar-container" id="upload-progress-container">
+                    <div class="progress-bar" id="upload-progress-bar"></div>
+                </div>
+                <p id="upload-status"></p>
+
+                <button type="submit">Enviar Vídeo</button>
+            </form>
+        </div>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            // Elementos do Modal de Upload
+            const uploadModal = document.getElementById('upload-modal');
+            const openUploadModalBtn = document.getElementById('open-upload-modal');
+            const closeUploadModalBtn = document.getElementById('close-upload-modal');
+            const videoUploadForm = document.getElementById('video-upload-form');
+            const uploadProgressBar = document.getElementById('upload-progress-bar');
+            const uploadProgressContainer = document.getElementById('upload-progress-container');
+            const uploadStatus = document.getElementById('upload-status');
+
+            // --- Funções de Controle do Modal ---
+            openUploadModalBtn.addEventListener('click', (event) => {
+                event.preventDefault();
+                uploadModal.classList.add('active'); // Adiciona a classe 'active' para mostrar o modal
+            });
+
+            closeUploadModalBtn.addEventListener('click', () => {
+                uploadModal.classList.remove('active'); // Remove a classe 'active' para esconder o modal
+                // Resetar formulário e progresso ao fechar
+                videoUploadForm.reset();
+                uploadProgressContainer.style.display = 'none';
+                uploadProgressBar.style.width = '0%';
+                uploadStatus.textContent = '';
+            });
+
+            uploadModal.addEventListener('click', (event) => {
+                // Fecha o modal se clicar fora do conteúdo
+                if (event.target === uploadModal) {
+                    uploadModal.classList.remove('active');
+                    videoUploadForm.reset();
+                    uploadProgressContainer.style.display = 'none';
+                    uploadProgressBar.style.width = '0%';
+                    uploadStatus.textContent = '';
+                }
+            });
+
+            // --- Simulação de Upload de Vídeo ---
+            videoUploadForm.addEventListener('submit', (event) => {
+                event.preventDefault(); // Impede o envio real do formulário
+
+                const videoFile = document.getElementById('video-file').files[0];
+                const videoTitle = document.getElementById('video-title').value;
+                const videoDescription = document.getElementById('video-description').value;
+                const videoTags = document.getElementById('video-tags').value;
+
+                if (!videoFile) {
+                    alert('Por favor, selecione um arquivo de vídeo para upload.');
+                    return;
+                }
+
+                uploadProgressContainer.style.display = 'block'; // Mostra a barra de progresso
+                uploadStatus.textContent = 'Iniciando upload...';
+
+                console.log('Dados do vídeo para upload:', {
+                    fileName: videoFile.name,
+                    fileSize: videoFile.size,
+                    title: videoTitle,
+                    description: videoDescription,
+                    tags: videoTags
+                });
+
+                // Simulação de progresso de upload
+                let progress = 0;
+                const interval = setInterval(() => {
+                    progress += 10;
+                    uploadProgressBar.style.width = `${progress}%`;
+                    uploadStatus.textContent = `Enviando: ${progress}%`;
+
+                    if (progress >= 100) {
+                        clearInterval(interval);
+                        uploadStatus.textContent = 'Upload completo! Processando vídeo...';
+                        uploadProgressBar.style.backgroundColor = 'green'; // Sinaliza sucesso
+                        setTimeout(() => {
+                            alert('Vídeo "'+ videoTitle +'" enviado com sucesso! Será publicado em breve.');
+                            uploadModal.classList.remove('active'); // Fecha o modal
+                            videoUploadForm.reset(); // Reseta o formulário
+                            uploadProgressContainer.style.display = 'none'; // Esconde a barra
+                            uploadProgressBar.style.width = '0%'; // Reseta o progresso
+                            uploadProgressBar.style.backgroundColor = 'var(--accent-color)'; // Volta a cor
+                            uploadStatus.textContent = '';
+                        }, 1000); // Espera um pouco antes de fechar e resetar
+                    }
+                }, 200); // Atualiza a cada 200ms
+            });
+
+            // --- Funções para botões de navegação (já existentes) ---
+            function setupNavButtons() {
+                // O botão de upload agora tem um ID para ser selecionado diretamente
+                // const uploadBtn = document.querySelector('a[href="#upload"]'); // Não precisa mais deste
+                const exploreBtn = document.querySelector('a[href="#explore"]');
+                const profileBtn = document.querySelector('a[href="#profile"]');
+
+                if (exploreBtn) {
+                    exploreBtn.addEventListener('click', (event) => {
+                        event.preventDefault();
+                        console.log('Botão Explorar clicado!');
+                        alert('Seção Explorar em breve!');
+                    });
+                }
+
+                if (profileBtn) {
+                    profileBtn.addEventListener('click', (event) => {
+                        event.preventDefault();
+                        console.log('Botão Meu Perfil clicado!');
+                        alert('Página de Perfil em construção!');
+                    });
+                }
+            }
+
+            setupNavButtons();
+
+            // --- Funções para botões de ação do vídeo (já existentes) ---
+            function setupVideoActionButtons() {
+                const likeButtons = document.querySelectorAll('.like-btn');
+                const commentButtons = document.querySelectorAll('.comment-btn');
+                const shareButtons = document.querySelectorAll('.share-btn');
+
+                likeButtons.forEach(button => {
+                    button.addEventListener('click', () => {
+                        console.log('Vídeo curtido!');
+                        // Adicionando um ID para o botão de like, se não tiver.
+                        // Para um contador real, você precisaria de backend
+                        let currentLikes = parseInt(button.textContent.replace('❤️ ', ''));
+                        if (button.dataset.liked === "true") {
+                            button.textContent = `❤️ ${currentLikes - 1}`;
+                            button.style.color = 'var(--text-color)';
+                            button.dataset.liked = "false";
+                        } else {
+                            button.textContent = `❤️ ${currentLikes + 1}`;
+                            button.style.color = 'var(--accent-color)'; // Destaque quando curtido
+                            button.dataset.liked = "true";
+                        }
+                    });
+                });
+
+                commentButtons.forEach(button => {
+                    button.addEventListener('click', () => {
+                        console.log('Botão Comentar clicado!');
+                        alert('Abrindo caixa de comentários...');
+                    });
+                });
+
+                shareButtons.forEach(button => {
+                    button.addEventListener('click', () => {
+                        console.log('Botão Compartilhar clicado!');
+                        alert('Opções de compartilhamento apareceriam aqui!');
+                    });
+                });
+            }
+
+            setupVideoActionButtons();
+        });
+    </script>
+</body>
+</html>
