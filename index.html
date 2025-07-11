@@ -14,7 +14,7 @@
             --card-bg-color: #2a2a2a;
             --text-color: #ffffff;
             --light-gray: #b0b0b0;
-            --accent-color: #e91e63; /* Rosa vibrante */
+            --accent-color: #e91e63;
             --border-radius: 8px;
             --spacing-sm: 10px;
             --spacing-md: 20px;
@@ -30,10 +30,9 @@
             display: flex;
             flex-direction: column;
             min-height: 100vh;
-            overflow-x: hidden; /* Evita scroll horizontal */
+            overflow-x: hidden;
         }
 
-        /* Header */
         .main-header {
             background-color: var(--secondary-bg-color);
             padding: var(--spacing-md) var(--spacing-lg);
@@ -75,7 +74,6 @@
             color: var(--text-color);
         }
 
-        /* Main Content - Feed de Vídeos */
         .video-feed {
             flex-grow: 1;
             padding: var(--spacing-lg);
@@ -84,7 +82,7 @@
             gap: var(--spacing-md);
             max-width: 1200px;
             margin: var(--spacing-md) auto;
-            display: none; /* ESCONDIDO POR PADRÃO - SÓ APARECE SE LOGADO */
+            display: none;
         }
 
         .video-container {
@@ -103,7 +101,7 @@
 
         .video-player {
             width: 100%;
-            height: 400px; /* Altura fixa para vídeos */
+            height: 400px;
             object-fit: cover;
             background-color: black;
         }
@@ -174,7 +172,6 @@
             color: var(--text-color);
         }
 
-        /* Footer */
         .main-footer {
             background-color: var(--secondary-bg-color);
             color: var(--light-gray);
@@ -184,7 +181,6 @@
             border-top: 1px solid #333;
         }
 
-        /* Modal de Upload */
         #upload-modal, #signup-modal, #login-modal {
             position: fixed;
             top: 0;
@@ -264,7 +260,7 @@
         }
 
         .upload-form input[type="file"] {
-            padding: 0; /* Remover padding extra para input file */
+            padding: 0;
         }
 
         .upload-form textarea {
@@ -306,7 +302,6 @@
             transition: width 0.3s ease;
         }
 
-        /* Estilos para Modais de Autenticação */
         .auth-form {
             display: flex;
             flex-direction: column;
@@ -371,7 +366,7 @@
         }
 
         .google-signin-btn {
-            background-color: #4285F4; /* Cor do Google */
+            background-color: #4285F4;
             color: white;
             border: none;
             padding: var(--spacing-md) var(--spacing-lg);
@@ -392,7 +387,6 @@
             background-color: #357ae8;
         }
 
-        /* Container de Autenticação para quando o usuário não está logado */
         #auth-required-container {
             flex-grow: 1;
             display: flex;
@@ -403,7 +397,7 @@
             padding: var(--spacing-lg);
             gap: var(--spacing-md);
             background-color: var(--primary-bg-color);
-            min-height: calc(100vh - 100px); /* Ajuste com base na altura do header/footer */
+            min-height: calc(100vh - 100px);
         }
 
         #auth-required-container h2 {
@@ -547,18 +541,35 @@
     <script src="https://www.gstatic.com/firebasejs/9.6.0/firebase-auth-compat.js"></script>
 
     <script>
-        // Configuração do Firebase (SUBSTITUA PELAS SUAS CREDENCIAIS REAIS DO SEU PROJETO!)
+        // Configuração do Firebase (SUBSTITUA PELAS SUAS CREDENCIAIS REAIS)
         const firebaseConfig = {
-            apiKey: "AIzaSyAg1-sK-1S5Nl5O7DKXKzeQIBteMC4dJq8", // Substitua pela sua API Key
-            authDomain: "rollit-fd7d5.firebaseapp.com", // Substitua pelo seu Auth Domain
-            projectId: "rollit-fd7d5", // Seu Project ID
-            storageBucket: "rollit-fd7d5.firebasestorage.app", // Substitua pelo seu Storage Bucket
-            messagingSenderId: "1016509530827", // Substitua pelo seu Messaging Sender ID
-            appId: "1:1016509530827:web:d182f29fc098b53c07914e" // Substitua pelo seu App ID
+            apiKey: "AIzaSyAg1-sK-1S5Nl5O7DKXKzeQIBteMC4dJq8",
+            authDomain: "rollit-fd7d5.firebaseapp.com",
+            projectId: "rollit-fd7d5",
+            storageBucket: "rollit-fd7d5.appspot.com",
+            messagingSenderId: "1016509530827",
+            appId: "1:1016509530827:web:d182f29fc098b53c07914e"
         };
 
         // Inicializa o Firebase
-        firebase.initializeApp(firebaseConfig);
+        try {
+            if (!firebase.apps.length) {
+                firebase.initializeApp(firebaseConfig);
+            }
+        } catch (error) {
+            console.error("Erro ao inicializar Firebase:", error);
+            alert("Erro crítico: Não foi possível inicializar o serviço. Recarregue a página.");
+        }
+
+        // Configurações do Cloudinary (SUBSTITUA COM SEUS DADOS)
+        const CLOUDINARY_CONFIG = {
+            cloudName: 'SEU_CLOUD_NAME',
+            uploadPreset: 'SEU_UPLOAD_PRESET',
+            apiUrl: `https://api.cloudinary.com/v1_1/SEU_CLOUD_NAME/video/upload`
+        };
+
+        // URL do avatar padrão
+        const DEFAULT_AVATAR_URL = 'https://cdn.pixabay.com/photo/2015/10/05/22/37/blank-profile-picture-973460_960_720.png';
 
         // Obtenha referências aos serviços
         const db = firebase.firestore();
@@ -579,7 +590,7 @@
         const videoTagsInput = document.getElementById('video-tags');
         const uploadProgress = document.getElementById('upload-progress');
         const loadingMessage = document.getElementById('loading-message');
-        const videoFeedContainer = document.getElementById('video-feed-container'); // O container principal do feed
+        const videoFeedContainer = document.getElementById('video-feed-container');
 
         // Elementos do Modal de Registro
         const signupModal = document.getElementById('signup-modal');
@@ -591,7 +602,7 @@
         const signupMessage = document.getElementById('signup-message');
         const signupGoogleBtn = document.getElementById('signup-google-btn');
         const showLoginFromSignupLink = document.getElementById('show-login-from-signup');
-        const showSignupBtn = document.getElementById('show-signup-btn'); // Botão na tela de auth-required
+        const showSignupBtn = document.getElementById('show-signup-btn');
 
         // Elementos do Modal de Login
         const loginModal = document.getElementById('login-modal');
@@ -602,12 +613,12 @@
         const loginMessage = document.getElementById('login-message');
         const loginGoogleBtn = document.getElementById('login-google-btn');
         const showSignupFromLoginLink = document.getElementById('show-signup-from-login');
-        const showLoginBtn = document.getElementById('show-login-btn'); // Botão na tela de auth-required
+        const showLoginBtn = document.getElementById('show-login-btn');
 
         // Elementos de Navegação do Header
         const navAuthLink = document.getElementById('auth-link');
         const navProfileLink = document.getElementById('nav-profile-link');
-        const authRequiredContainer = document.getElementById('auth-required-container'); // O container da mensagem de "Login Necessário"
+        const authRequiredContainer = document.getElementById('auth-required-container');
 
         // --- Funções de Controle de Modais ---
         function openModal(modal) {
@@ -694,8 +705,8 @@
                 await db.collection('users').doc(user.uid).set({
                     email: user.email,
                     createdAt: firebase.firestore.FieldValue.serverTimestamp(),
-                    profileName: user.email.split('@')[0], // Nome padrão
-                    profileAvatar: 'https://res.cloudinary.com/YOUR_CLOUD_NAME/image/upload/v1/avatar_default.jpg' // Substitua pela URL do seu avatar padrão no Cloudinary
+                    profileName: user.email.split('@')[0],
+                    profileAvatar: DEFAULT_AVATAR_URL
                 });
 
                 showAuthMessage(signupMessage, 'Conta criada com sucesso! Você está logado.', false);
@@ -764,7 +775,7 @@
                     await userDocRef.set({
                         email: user.email,
                         profileName: user.displayName || user.email.split('@')[0],
-                        profileAvatar: user.photoURL || 'https://res.cloudinary.com/YOUR_CLOUD_NAME/image/upload/v1/avatar_default.jpg', // Substitua pela URL do seu avatar padrão no Cloudinary
+                        profileAvatar: user.photoURL || DEFAULT_AVATAR_URL,
                         createdAt: firebase.firestore.FieldValue.serverTimestamp()
                     });
                     console.log('Novo usuário Google salvo no Firestore.');
@@ -793,9 +804,6 @@
                 const user = userCredential.user;
                 console.log('Login com Google bem-sucedido:', user);
 
-                // A gravação no Firestore para novos usuários Google é feita na parte de signupGoogleBtn.
-                // onAuthStateChanged garantirá que o documento do Firestore seja criado/atualizado.
-
                 showAuthMessage(loginMessage, 'Login com Google realizado com sucesso!', false);
                 setTimeout(() => {
                     closeModal(loginModal);
@@ -817,21 +825,18 @@
             try {
                 await auth.signOut();
                 alert('Você saiu da sua conta.');
-                // onAuthStateChanged cuidará da atualização da UI
             } catch (error) {
                 console.error('Erro ao sair:', error);
                 alert('Erro ao sair da conta. Tente novamente.');
             }
         }
 
-        // --- Gerenciar o Estado de Autenticação (onAuthStateChanged) ---
+        // --- Gerenciar o Estado de Autenticação ---
         auth.onAuthStateChanged(async (user) => {
             if (user) {
-                // Usuário está logado
                 currentUser = user;
                 console.log('Usuário logado:', user.email, 'UID:', user.uid);
 
-                // Buscar dados adicionais do usuário (nome, avatar) do Firestore
                 try {
                     const userDocRef = db.collection('users').doc(user.uid);
                     const doc = await userDocRef.get();
@@ -841,52 +846,44 @@
                         currentUser.profileAvatar = userData.profileAvatar;
                         console.log('Dados do perfil do Firestore:', userData);
                     } else {
-                        // Se não existe (ex: login com Google onde o doc não foi criado ainda), cria um documento básico
                         await userDocRef.set({
                             email: user.email,
                             profileName: user.displayName || user.email.split('@')[0],
-                            profileAvatar: user.photoURL || 'https://res.cloudinary.com/YOUR_CLOUD_NAME/image/upload/v1/avatar_default.jpg', // Substitua
+                            profileAvatar: user.photoURL || DEFAULT_AVATAR_URL,
                             createdAt: firebase.firestore.FieldValue.serverTimestamp()
                         }, { merge: true });
                         currentUser.profileName = user.displayName || user.email.split('@')[0];
-                        currentUser.profileAvatar = user.photoURL || 'https://res.cloudinary.com/YOUR_CLOUD_NAME/image/upload/v1/avatar_default.jpg'; // Substitua
+                        currentUser.profileAvatar = user.photoURL || DEFAULT_AVATAR_URL;
                         console.log('Documento de usuário criado/atualizado no Firestore para:', user.email);
                     }
                 } catch (firestoreError) {
                     console.error('Erro ao buscar/criar documento de usuário no Firestore:', firestoreError);
                 }
 
-                // Esconder a tela de "Autenticação Necessária" e mostrar o feed
                 authRequiredContainer.style.display = 'none';
-                videoFeedContainer.style.display = 'grid'; // Mostra o feed
+                videoFeedContainer.style.display = 'grid';
 
-                // Atualizar UI do Header
-                openUploadModalBtn.style.display = 'block'; // Mostra o botão de upload
+                openUploadModalBtn.style.display = 'block';
                 navAuthLink.textContent = `Sair (${currentUser.profileName || user.email})`;
                 navAuthLink.href = '#logout';
-                navAuthLink.removeEventListener('click', openModal); // Remove listener antigo
-                navAuthLink.addEventListener('click', handleLogout); // Adiciona novo listener para logout
+                navAuthLink.removeEventListener('click', openModal);
+                navAuthLink.addEventListener('click', handleLogout);
 
-                // Carrega os vídeos (agora o usuário está logado)
                 loadVideos();
 
             } else {
-                // Usuário não está logado
                 currentUser = null;
                 console.log('Nenhum usuário logado.');
 
-                // Mostrar a tela de "Autenticação Necessária" e esconder o feed
                 authRequiredContainer.style.display = 'flex';
-                videoFeedContainer.style.display = 'none'; // Esconde o feed
+                videoFeedContainer.style.display = 'none';
 
-                // Atualizar UI do Header
-                openUploadModalBtn.style.display = 'none'; // Esconde o botão de upload
+                openUploadModalBtn.style.display = 'none';
                 navAuthLink.textContent = 'Login / Registro';
                 navAuthLink.href = '#login';
-                navAuthLink.removeEventListener('click', handleLogout); // Remove listener antigo
-                navAuthLink.addEventListener('click', () => openModal(loginModal)); // Adiciona listener para abrir login
+                navAuthLink.removeEventListener('click', handleLogout);
+                navAuthLink.addEventListener('click', () => openModal(loginModal));
 
-                // Limpa o feed ou mostra uma mensagem
                 videoFeedContainer.innerHTML = '<p id="loading-message">Faça login para ver o feed de vídeos.</p>';
             }
         });
@@ -902,7 +899,7 @@
                 </video>
                 <div class="video-info">
                     <div class="creator-info">
-                        <img src="${video.creatorAvatar || 'https://res.cloudinary.com/YOUR_CLOUD_NAME/image/upload/v1/avatar_default.jpg'}" alt="Avatar do Criador" class="creator-avatar">
+                        <img src="${video.creatorAvatar || DEFAULT_AVATAR_URL}" alt="Avatar do Criador" class="creator-avatar">
                         <p class="creator-name">${video.creator}</p>
                     </div>
                     <h3>${video.title}</h3>
@@ -921,26 +918,34 @@
         // --- Função para Carregar Vídeos do Firestore ---
         async function loadVideos() {
             loadingMessage.textContent = 'Carregando vídeos...';
-            videoFeedContainer.innerHTML = ''; // Limpa o feed antes de carregar
+            videoFeedContainer.innerHTML = '';
 
             try {
                 const snapshot = await db.collection('videos').orderBy('createdAt', 'desc').get();
                 if (snapshot.empty) {
-                    loadingMessage.textContent = 'Nenhum vídeo encontrado. Faça um upload!';
+                    loadingMessage.textContent = 'Nenhum vídeo encontrado. Seja o primeiro a enviar!';
                     videoFeedContainer.appendChild(loadingMessage);
                     return;
                 }
 
                 snapshot.forEach(doc => {
-                    const video = doc.data();
-                    const videoCard = createVideoCard(video);
-                    videoFeedContainer.appendChild(videoCard);
+                    try {
+                        const video = doc.data();
+                        if (video.videoUrl) {
+                            const videoCard = createVideoCard(video);
+                            videoFeedContainer.appendChild(videoCard);
+                        }
+                    } catch (error) {
+                        console.error('Erro ao processar vídeo:', error);
+                    }
                 });
-                loadingMessage.style.display = 'none'; // Esconde a mensagem de carregamento
+                
             } catch (error) {
                 console.error('Erro ao carregar vídeos:', error);
-                loadingMessage.textContent = 'Erro ao carregar vídeos. Tente novamente mais tarde.';
+                loadingMessage.textContent = 'Erro ao carregar vídeos. Verifique sua conexão.';
                 videoFeedContainer.appendChild(loadingMessage);
+            } finally {
+                loadingMessage.style.display = 'none';
             }
         }
 
@@ -951,92 +956,73 @@
             if (!currentUser) {
                 alert('Você precisa estar logado para enviar vídeos!');
                 closeModal(uploadModal);
-                openModal(loginModal); // Abre o modal de login
+                openModal(loginModal);
                 return;
             }
 
             const videoFile = videoFileInput.files[0];
-            const videoTitle = videoTitleInput.value;
-            const videoDescription = videoDescriptionInput.value;
-            const videoTags = videoTagsInput.value;
-
             if (!videoFile) {
                 alert('Por favor, selecione um arquivo de vídeo.');
                 return;
             }
 
-            // Cloudinary Configuration (SUBSTITUA COM SEUS DADOS REAIS DO CLOUDINARY!)
-            const CLOUDINARY_URL = 'https://api.cloudinary.com/v1_1/YOUR_CLOUD_NAME/video/upload'; // Substitua YOUR_CLOUD_NAME
-            const CLOUDINARY_UPLOAD_PRESET = 'YOUR_UPLOAD_PRESET'; // Substitua YOUR_UPLOAD_PRESET (o que você configurou como "unsigned")
+            if (videoFile.size > 50 * 1024 * 1024) {
+                alert('O arquivo é muito grande. Tamanho máximo: 50MB');
+                return;
+            }
 
             const formData = new FormData();
             formData.append('file', videoFile);
-            formData.append('upload_preset', CLOUDINARY_UPLOAD_PRESET);
+            formData.append('upload_preset', CLOUDINARY_CONFIG.uploadPreset);
 
             uploadProgress.style.width = '0%';
             uploadProgress.textContent = '0%';
 
-            const xhr = new XMLHttpRequest();
-            xhr.open('POST', CLOUDINARY_URL, true);
+            try {
+                const response = await fetch(CLOUDINARY_CONFIG.apiUrl, {
+                    method: 'POST',
+                    body: formData
+                });
 
-            xhr.upload.addEventListener('progress', (e) => {
-                if (e.lengthComputable) {
-                    const percent = Math.round((e.loaded / e.total) * 100);
-                    uploadProgress.style.width = `${percent}%`;
-                    uploadProgress.textContent = `${percent}%`;
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
                 }
-            });
 
-            xhr.onreadystatechange = async () => {
-                if (xhr.readyState === 4) {
-                    if (xhr.status === 200) {
-                        const data = JSON.parse(xhr.responseText);
-                        console.log('Upload para Cloudinary bem-sucedido!', data);
+                const data = await response.json();
+                console.log('Upload bem-sucedido:', data);
 
-                        const videoUrl = data.secure_url;
-                        const videoPublicId = data.public_id;
+                const newVideo = {
+                    title: videoTitleInput.value,
+                    description: videoDescriptionInput.value,
+                    tags: videoTagsInput.value,
+                    videoUrl: data.secure_url,
+                    videoPublicId: data.public_id,
+                    creator: currentUser.profileName || currentUser.email,
+                    creatorAvatar: currentUser.profileAvatar || DEFAULT_AVATAR_URL,
+                    likes: 0,
+                    commentsCount: 0,
+                    createdAt: firebase.firestore.FieldValue.serverTimestamp()
+                };
 
-                        // Salvar informações do vídeo no Firestore
-                        const newVideo = {
-                            title: videoTitle,
-                            description: videoDescription,
-                            tags: videoTags,
-                            videoUrl: videoUrl,
-                            videoPublicId: videoPublicId,
-                            creator: currentUser.profileName || currentUser.email, // Usa o nome do usuário logado
-                            creatorAvatar: currentUser.profileAvatar || 'https://res.cloudinary.com/YOUR_CLOUD_NAME/image/upload/v1/avatar_default.jpg', // Usa o avatar do usuário logado
-                            likes: 0,
-                            commentsCount: 0,
-                            createdAt: firebase.firestore.FieldValue.serverTimestamp()
-                        };
-
-                        try {
-                            await db.collection('videos').add(newVideo);
-                            alert('Vídeo enviado e salvo com sucesso!');
-                            videoUploadForm.reset();
-                            uploadProgress.style.width = '0%';
-                            uploadProgress.textContent = '0%';
-                            closeModal(uploadModal);
-                            loadVideos(); // Recarrega os vídeos no feed
-                        } catch (firestoreError) {
-                            console.error('Erro ao salvar vídeo no Firestore:', firestoreError);
-                            alert('Upload completo, mas erro ao salvar dados no banco de dados. Tente novamente.');
-                        }
-
-                    } else {
-                        console.error('Erro no upload do Cloudinary:', xhr.status, xhr.responseText);
-                        alert('Erro ao enviar vídeo para o Cloudinary. Verifique o console para detalhes.');
-                        uploadProgress.style.width = '0%';
-                        uploadProgress.textContent = 'Erro!';
-                    }
+                try {
+                    await db.collection('videos').add(newVideo);
+                    alert('Vídeo enviado e salvo com sucesso!');
+                    videoUploadForm.reset();
+                    uploadProgress.style.width = '0%';
+                    uploadProgress.textContent = '0%';
+                    closeModal(uploadModal);
+                    loadVideos();
+                } catch (firestoreError) {
+                    console.error('Erro ao salvar vídeo no Firestore:', firestoreError);
+                    alert('Upload completo, mas erro ao salvar dados no banco de dados. Tente novamente.');
                 }
-            };
-
-            xhr.send(formData);
+                
+            } catch (error) {
+                console.error('Erro no upload:', error);
+                uploadProgress.textContent = 'Erro!';
+                alert('Falha no upload. Verifique o console para detalhes.');
+            }
         });
-
-        // A função loadVideos é chamada dentro de onAuthStateChanged para garantir que o feed seja carregado apenas quando logado.
-        // Não a chame diretamente no DOMContentLoaded.
     </script>
 </body>
 </html>
